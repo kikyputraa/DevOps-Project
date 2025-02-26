@@ -1,6 +1,6 @@
 ---
 - name: Setup Nextcloud
-  hosts: vm4
+  hosts: localhost
   become: true
   tasks:
     - name: Install dependencies
