@@ -1,6 +1,6 @@
 ---
 - name: Setup Grafana and Prometheus
-  hosts: vm3
+  hosts: localhost
   become: true
   tasks:
     - name: Install dependencies
