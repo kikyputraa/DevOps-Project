@@ -25,6 +25,7 @@
           - php-soap
           - php-intl
           - php-zip
+          - python3-pymysql
           - unzip
           - curl
         state: present
