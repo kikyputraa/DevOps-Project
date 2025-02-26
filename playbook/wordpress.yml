@@ -7,6 +7,7 @@
     db_name: wordpress
     db_user: wpuser
     db_password: kyput
+    db_host: localhost
     wp_install_dir: /var/www/html
 
   tasks:
