@@ -1,0 +1,32 @@
+---
+- name: Setup Nextcloud
+  hosts: vm4
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - apache2
+          - mysql-server
+          - php
+          - php-mysql
+          - libapache2-mod-php
+          - unzip
+        state: present
+        update_cache: yes
+
+    - name: Download dan extract Nextcloud
+      shell: |
+        wget -O /tmp/nextcloud.zip https://download.nextcloud.com/server/releases/latest.zip
+        unzip /tmp/nextcloud.zip -d /var/www/html/
+        chown -R www-data:www-data /var/www/html/nextcloud
+
+    - name: Set konfigurasi Nextcloud otomatis
+      shell: |
+        sudo -u www-data php /var/www/html/nextcloud/occ maintenance:install \
+        --database "mysql" \
+        --database-name "nextcloud_db" \
+        --database-user "nextcloud_user" \
+        --database-pass "nextcloud_password" \
+        --admin-user "admin" \
+        --admin-pass "admin123"
