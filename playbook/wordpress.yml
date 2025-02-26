@@ -1,0 +1,79 @@
+---
+- name: Setup WordPress, MySQL, Apache2
+  hosts: vm1
+  become: true
+  tasks:
+    - name: Install dependencies
+      apt:
+        name:
+          - apache2
+          - mysql-server
+          - php
+          - php-mysql
+          - libapache2-mod-php
+          - unzip
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Apache2 & MySQL
+      systemd:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - apache2
+        - mysql
+
+    - name: Buat database untuk WordPress
+      mysql_db:
+        name: wordpress_db
+        state: present
+
+    - name: Buat user MySQL untuk WordPress
+      mysql_user:
+        name: wordpress_user
+        password: wordpress_password
+        priv: "wordpress_db.*:ALL"
+        state: present
+
+    - name: Download dan extract WordPress
+      shell: |
+        wget -O /tmp/wordpress.tar.gz https://wordpress.org/latest.tar.gz
+        tar -xzvf /tmp/wordpress.tar.gz -C /var/www/html/
+        mv /var/www/html/wordpress /var/www/html/wordpress-site
+        chown -R www-data:www-data /var/www/html/wordpress-site
+
+    - name: Salin file wp-config.php
+      template:
+        src: wp-config.php.j2
+        dest: /var/www/html/wordpress-site/wp-config.php
+        owner: www-data
+        group: www-data
+        mode: '0644'
+
+    - name: Konfigurasi VirtualHost Apache untuk WordPress
+      copy:
+        dest: /etc/apache2/sites-available/wordpress.conf
+        content: |
+          <VirtualHost *:80>
+              ServerAdmin admin@domain.com
+              DocumentRoot /var/www/html/wordpress-site
+              <Directory /var/www/html/wordpress-site>
+                  AllowOverride All
+              </Directory>
+              ErrorLog ${APACHE_LOG_DIR}/error.log
+              CustomLog ${APACHE_LOG_DIR}/access.log combined
+          </VirtualHost>
+      notify: Restart Apache
+
+    - name: Enable VirtualHost dan mod_rewrite
+      shell: |
+        a2ensite wordpress.conf
+        a2enmod rewrite
+      notify: Restart Apache
+
+  handlers:
+    - name: Restart Apache
+      systemd:
+        name: apache2
+        state: restarted
