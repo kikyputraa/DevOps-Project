@@ -73,6 +73,7 @@ ssh <user>@<template-vm-ip>
 ```sh
 sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 sudo grep -E "^PermitRootLogin" /etc/ssh/sshd_config
+sudo systemctl restart ssh
 sudo systemctl status ssh
 ```
 
