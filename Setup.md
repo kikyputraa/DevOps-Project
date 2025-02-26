@@ -69,6 +69,12 @@ sudo apt install openssh-server
 ```sh
 ssh <user>@<template-vm-ip>
 ```
+#### 3`. Ubah settingan sshd agaer permit login root
+```sh
+sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sudo grep -E "^PermitRootLogin" /etc/ssh/sshd_config
+sudo systemctl status ssh
+```
 
 ### **Langkah 4: Tambahkan Kunci ke `authorized_keys`**
 #### 1. Buat direktori `.ssh` (jika belum ada):
