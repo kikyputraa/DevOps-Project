@@ -2,8 +2,14 @@
 - name: Setup WordPress, MySQL, Apache2 (Localhost)
   hosts: localhost
   become: yes
-  tasks:
 
+  vars:
+    db_name: wordpress
+    db_user: wpuser
+    db_password: kyput
+    wp_install_dir: /var/www/html
+
+  tasks:
     - name: Install dependencies
       apt:
         name:
@@ -19,7 +25,6 @@
           - php-soap
           - php-intl
           - php-zip
-          - python3-pymysql
           - unzip
           - curl
         state: present
@@ -45,16 +50,16 @@
 
     - name: Create WordPress Database
       mysql_db:
-        name: wordpress
+        name: "{{ db_name }}"
         state: present
         login_user: root
         login_password: kyput
 
     - name: Create MySQL User for WordPress
       mysql_user:
-        name: wpuser
-        password: kyput
-        priv: "wordpress.*:ALL"
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
         host: localhost
         state: present
         login_user: root
@@ -74,7 +79,7 @@
     - name: Copy WordPress to web root
       copy:
         src: "/tmp/wordpress/"
-        dest: "/var/www/html/"
+        dest: "{{ wp_install_dir }}"
         remote_src: yes
         owner: www-data
         group: www-data
@@ -82,7 +87,7 @@
 
     - name: Set ownership for WordPress files
       file:
-        path: "/var/www/html"
+        path: "{{ wp_install_dir }}"
         state: directory
         recurse: yes
         owner: www-data
@@ -91,14 +96,14 @@
     - name: Copy WordPress Config File
       template:
         src: templates/wp-config.php.j2
-        dest: /var/www/html/wp-config.php
+        dest: "{{ wp_install_dir }}/wp-config.php"
         owner: www-data
         group: www-data
         mode: "0644"
 
     - name: Remove default Apache index.html
       file:
-        path: /var/www/html/index.html
+        path: "{{ wp_install_dir }}/index.html"
         state: absent
 
     - name: Restart Apache
