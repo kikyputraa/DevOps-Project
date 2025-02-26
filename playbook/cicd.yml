@@ -1,6 +1,6 @@
 ---
 - name: Setup Jenkins and Docker
-  hosts: vm2
+  hosts: localhost
   become: true
   tasks:
     - name: Install dependencies
