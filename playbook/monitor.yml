@@ -1,53 +1,145 @@
-- name: Install and Configure Grafana
+- name: Setup Monitoring (Prometheus, Grafana, Node Exporter)
   hosts: localhost
   become: yes
   tasks:
-  
-    - name: Add Grafana APT Key
-      apt_key:
-        url: https://packages.grafana.com/gpg.key
-        state: present
 
-    - name: Add Grafana APT Repository
-      apt_repository:
-        repo: "deb https://packages.grafana.com/oss/deb stable main"
-        state: present
-        filename: grafana
+    # 1️⃣ Install Prometheus
+    - name: Download Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/latest/download/prometheus-linux-amd64.tar.gz"
+        dest: "/tmp/prometheus.tar.gz"
 
+    - name: Extract Prometheus
+      unarchive:
+        src: "/tmp/prometheus.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Move Prometheus binaries
+      copy:
+        src: "/opt/prometheus-linux-amd64/"
+        dest: "/opt/prometheus/"
+        remote_src: yes
+
+    - name: Create Prometheus user
+      user:
+        name: prometheus
+        shell: /sbin/nologin
+
+    - name: Set Prometheus permissions
+      file:
+        path: "/opt/prometheus/"
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+
+    - name: Copy Prometheus config
+      template:
+        src: templates/prometheus.yml.j2
+        dest: /opt/prometheus/prometheus.yml
+        owner: prometheus
+        group: prometheus
+
+    - name: Create Prometheus systemd service
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus Monitoring
+          After=network.target
+
+          [Service]
+          User=prometheus
+          ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd and start Prometheus
+      systemd:
+        daemon_reload: yes
+        name: prometheus
+        state: started
+        enabled: yes
+
+    # 2️⃣ Install Grafana
     - name: Install Grafana
       apt:
         name: grafana
         state: present
         update_cache: yes
 
-    - name: Ensure Grafana service is enabled and started
-      service:
+    - name: Start Grafana service
+      systemd:
         name: grafana-server
-        enabled: yes
         state: started
+        enabled: yes
 
-    - name: Copy Data Source Config
+    - name: Copy Grafana dashboard config
       copy:
-        src: files/prometheus.yml
-        dest: /etc/grafana/provisioning/datasources/prometheus.yml
-
-    - name: Copy Dashboard Config
-      copy:
-        src: files/dashboard.yml
+        src: templates/dashboard.yml
         dest: /etc/grafana/provisioning/dashboards/dashboard.yml
 
-    - name: Ensure Dashboard Directory Exists
-      file:
-        path: /etc/grafana/dashboards
-        state: directory
-        mode: "0755"
-
-    - name: Copy Dashboard JSON
+    - name: Copy Grafana dashboard JSON
       copy:
-        src: files/node-exporter.json
-        dest: /etc/grafana/dashboards/node-exporter.json
+        src: templates/dashboard.json
+        dest: /var/lib/grafana/dashboards/default.json
 
     - name: Restart Grafana
-      service:
+      systemd:
         name: grafana-server
         state: restarted
+
+    # 3️⃣ Install Node Exporter
+    - name: Download Node Exporter
+      get_url:
+        url: "https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-linux-amd64.tar.gz"
+        dest: "/tmp/node_exporter.tar.gz"
+
+    - name: Extract Node Exporter
+      unarchive:
+        src: "/tmp/node_exporter.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Move Node Exporter binaries
+      copy:
+        src: "/opt/node_exporter-linux-amd64/"
+        dest: "/opt/node_exporter/"
+        remote_src: yes
+
+    - name: Create Node Exporter user
+      user:
+        name: node_exporter
+        shell: /sbin/nologin
+
+    - name: Set Node Exporter permissions
+      file:
+        path: "/opt/node_exporter/"
+        owner: node_exporter
+        group: node_exporter
+        recurse: yes
+
+    - name: Create Node Exporter systemd service
+      copy:
+        dest: /etc/systemd/system/node_exporter.service
+        content: |
+          [Unit]
+          Description=Node Exporter
+          After=network.target
+
+          [Service]
+          User=node_exporter
+          ExecStart=/opt/node_exporter/node_exporter
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd and start Node Exporter
+      systemd:
+        daemon_reload: yes
+        name: node_exporter
+        state: started
+        enabled: yes
