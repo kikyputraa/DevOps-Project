@@ -3,7 +3,6 @@
   become: yes
   tasks:
 
-    # 1️⃣ Install Prometheus
     - name: Download Prometheus
       get_url:
         url: "https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz"
@@ -60,7 +59,6 @@
         state: started
         enabled: yes
 
-    # 2️⃣ Install Grafana
     - name: Add Grafana GPG key
       shell: |
         wget -q -O - https://packages.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana-keyring.gpg > /dev/null
@@ -84,6 +82,14 @@
         name: grafana-server
         state: started
         enabled: yes
+
+    - name: Ensure Grafana dashboards directory exists
+      file:
+        path: /var/lib/grafana/dashboards
+        state: directory
+        owner: grafana
+        group: grafana
+        mode: '0755'
 
     - name: Copy Grafana dashboard config
       copy:
