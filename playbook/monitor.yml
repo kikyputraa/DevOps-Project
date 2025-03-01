@@ -114,3 +114,15 @@
       systemd:
         name: grafana-server
         state: restarted
+
+    - name: Allow Prometheus port (9090) through UFW
+      ufw:
+        rule: allow
+        port: "9090"
+        proto: tcp
+
+    - name: Allow Grafana port (3000) through UFW
+      ufw:
+        rule: allow
+        port: "3000"
+        proto: tcp
