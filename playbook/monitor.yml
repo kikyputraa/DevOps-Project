@@ -4,10 +4,10 @@
   tasks:
 
     # 1️⃣ Install Prometheus
-   - name: Download Prometheus
-     get_url:
-       url: "https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz"
-       dest: "/tmp/prometheus.tar.gz"
+    - name: Download Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz"
+        dest: "/tmp/prometheus.tar.gz"
 
     - name: Extract Prometheus
       unarchive:
@@ -16,10 +16,7 @@
         remote_src: yes
 
     - name: Move Prometheus binaries
-      copy:
-        src: "/opt/prometheus-linux-amd64/"
-        dest: "/opt/prometheus/"
-        remote_src: yes
+      command: mv /opt/prometheus-2.51.2.linux-amd64 /opt/prometheus
 
     - name: Create Prometheus user
       user:
@@ -64,11 +61,23 @@
         enabled: yes
 
     # 2️⃣ Install Grafana
+    - name: Add Grafana GPG key
+      shell: |
+        wget -q -O - https://packages.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana-keyring.gpg > /dev/null
+
+    - name: Add Grafana APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: "deb [signed-by=/usr/share/keyrings/grafana-keyring.gpg] https://packages.grafana.com/oss/deb stable main"
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
     - name: Install Grafana
       apt:
         name: grafana
         state: present
-        update_cache: yes
 
     - name: Start Grafana service
       systemd:
