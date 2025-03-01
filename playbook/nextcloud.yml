@@ -1,32 +1,112 @@
 ---
-- name: Setup Nextcloud
+- name: Setup Nextcloud with MySQL and Apache2
   hosts: localhost
-  become: true
+  become: yes
+
+  vars:
+    db_name: nextcloud
+    db_user: nextclouduser
+    db_password: kyput
+    db_host: localhost
+    nextcloud_install_dir: /var/www/html/nextcloud
+
   tasks:
-    - name: Install dependencies
+    # 🔹 Install Dependencies
+    - name: Install required packages
       apt:
         name:
           - apache2
           - mysql-server
           - php
           - php-mysql
-          - libapache2-mod-php
+          - php-gd
+          - php-json
+          - php-curl
+          - php-mbstring
+          - php-intl
+          - php-imagick
+          - php-xml
+          - php-zip
+          - php-bcmath
+          - php-gmp
+          - python3-pymysql
           - unzip
+          - curl
         state: present
         update_cache: yes
 
-    - name: Download dan extract Nextcloud
-      shell: |
-        wget -O /tmp/nextcloud.zip https://download.nextcloud.com/server/releases/latest.zip
-        unzip /tmp/nextcloud.zip -d /var/www/html/
-        chown -R www-data:www-data /var/www/html/nextcloud
+    # 🔹 Start and Enable Apache & MySQL
+    - name: Ensure Apache and MySQL are running
+      service:
+        name: "{{ item }}"
+        state: started
+        enabled: yes
+      loop:
+        - apache2
+        - mysql
 
-    - name: Set konfigurasi Nextcloud otomatis
-      shell: |
-        sudo -u www-data php /var/www/html/nextcloud/occ maintenance:install \
-        --database "mysql" \
-        --database-name "nextcloud_db" \
-        --database-user "nextcloud_user" \
-        --database-pass "nextcloud_password" \
-        --admin-user "admin" \
-        --admin-pass "admin123"
+    # 🔹 Secure MySQL - Set root password
+    - name: Set MySQL root password and authentication method
+      mysql_user:
+        name: root
+        password: kyput
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        priv: "*.*:ALL,GRANT"
+        host: localhost
+        state: present
+
+    # 🔹 Create Nextcloud Database & User
+    - name: Create Nextcloud Database
+      mysql_db:
+        name: "{{ db_name }}"
+        state: present
+        login_user: root
+        login_password: kyput
+
+    - name: Create MySQL User for Nextcloud
+      mysql_user:
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
+        host: localhost
+        state: present
+        login_user: root
+        login_password: kyput
+
+    # 🔹 Download & Extract Nextcloud
+    - name: Download Nextcloud
+      get_url:
+        url: https://download.nextcloud.com/server/releases/latest.tar.bz2
+        dest: /tmp/nextcloud.tar.bz2
+
+    - name: Extract Nextcloud
+      unarchive:
+        src: /tmp/nextcloud.tar.bz2
+        dest: /tmp
+        remote_src: yes
+
+    - name: Move Nextcloud to web root
+      copy:
+        src: "/tmp/nextcloud/"
+        dest: "{{ nextcloud_install_dir }}"
+        remote_src: yes
+        owner: www-data
+        group: www-data
+        mode: "0755"
+
+    - name: Set ownership for Nextcloud files
+      file:
+        path: "{{ nextcloud_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+
+    # 🔹 Configure Apache for Nextcloud
+    - name: Enable Apache Modules
+      command: a2enmod rewrite
+
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
