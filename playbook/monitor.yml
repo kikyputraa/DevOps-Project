@@ -29,6 +29,14 @@
         group: prometheus
         recurse: yes
 
+    - name: Ensure /data directory exists
+      file:
+        path: /data
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+
     - name: Copy Prometheus config
       template:
         src: templates/prometheus.yml.j2
@@ -46,6 +54,7 @@
 
           [Service]
           User=prometheus
+          WorkingDirectory=/opt/prometheus
           ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml
           Restart=always
 
