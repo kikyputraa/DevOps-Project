@@ -1,4 +1,4 @@
-- name: Setup Monitoring (Prometheus, Grafana, Node Exporter)
+- name: Setup Monitoring (Prometheus & Grafana)
   hosts: localhost
   become: yes
   tasks:
@@ -90,56 +90,3 @@
       systemd:
         name: grafana-server
         state: restarted
-
-    # 3️⃣ Install Node Exporter
-    - name: Download Node Exporter
-      get_url:
-        url: "https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-linux-amd64.tar.gz"
-        dest: "/tmp/node_exporter.tar.gz"
-
-    - name: Extract Node Exporter
-      unarchive:
-        src: "/tmp/node_exporter.tar.gz"
-        dest: "/opt/"
-        remote_src: yes
-
-    - name: Move Node Exporter binaries
-      copy:
-        src: "/opt/node_exporter-linux-amd64/"
-        dest: "/opt/node_exporter/"
-        remote_src: yes
-
-    - name: Create Node Exporter user
-      user:
-        name: node_exporter
-        shell: /sbin/nologin
-
-    - name: Set Node Exporter permissions
-      file:
-        path: "/opt/node_exporter/"
-        owner: node_exporter
-        group: node_exporter
-        recurse: yes
-
-    - name: Create Node Exporter systemd service
-      copy:
-        dest: /etc/systemd/system/node_exporter.service
-        content: |
-          [Unit]
-          Description=Node Exporter
-          After=network.target
-
-          [Service]
-          User=node_exporter
-          ExecStart=/opt/node_exporter/node_exporter
-          Restart=always
-
-          [Install]
-          WantedBy=multi-user.target
-
-    - name: Reload systemd and start Node Exporter
-      systemd:
-        daemon_reload: yes
-        name: node_exporter
-        state: started
-        enabled: yes
