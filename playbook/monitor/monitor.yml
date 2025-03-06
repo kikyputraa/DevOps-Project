@@ -1,0 +1,128 @@
+- name: Setup Monitoring (Prometheus & Grafana)
+  hosts: localhost
+  become: yes
+  tasks:
+
+    - name: Download Prometheus
+      get_url:
+        url: "https://github.com/prometheus/prometheus/releases/download/v2.51.2/prometheus-2.51.2.linux-amd64.tar.gz"
+        dest: "/tmp/prometheus.tar.gz"
+
+    - name: Extract Prometheus
+      unarchive:
+        src: "/tmp/prometheus.tar.gz"
+        dest: "/opt/"
+        remote_src: yes
+
+    - name: Move Prometheus binaries
+      command: mv /opt/prometheus-2.51.2.linux-amd64 /opt/prometheus
+
+    - name: Create Prometheus user
+      user:
+        name: prometheus
+        shell: /sbin/nologin
+
+    - name: Set Prometheus permissions
+      file:
+        path: "/opt/prometheus/"
+        owner: prometheus
+        group: prometheus
+        recurse: yes
+
+    - name: Ensure /data directory exists
+      file:
+        path: /data
+        state: directory
+        owner: prometheus
+        group: prometheus
+        mode: '0755'
+
+    - name: Copy Prometheus config
+      template:
+        src: templates/prometheus.yml.j2
+        dest: /opt/prometheus/prometheus.yml
+        owner: prometheus
+        group: prometheus
+
+    - name: Create Prometheus systemd service
+      copy:
+        dest: /etc/systemd/system/prometheus.service
+        content: |
+          [Unit]
+          Description=Prometheus Monitoring
+          After=network.target
+
+          [Service]
+          User=prometheus
+          WorkingDirectory=/opt/prometheus
+          ExecStart=/opt/prometheus/prometheus --config.file=/opt/prometheus/prometheus.yml
+          Restart=always
+
+          [Install]
+          WantedBy=multi-user.target
+
+    - name: Reload systemd and start Prometheus
+      systemd:
+        daemon_reload: yes
+        name: prometheus
+        state: started
+        enabled: yes
+
+    - name: Add Grafana GPG key
+      shell: |
+        wget -q -O - https://packages.grafana.com/gpg.key | gpg --dearmor | sudo tee /usr/share/keyrings/grafana-keyring.gpg > /dev/null
+
+    - name: Add Grafana APT repository
+      copy:
+        dest: /etc/apt/sources.list.d/grafana.list
+        content: "deb [signed-by=/usr/share/keyrings/grafana-keyring.gpg] https://packages.grafana.com/oss/deb stable main"
+
+    - name: Update APT cache
+      apt:
+        update_cache: yes
+
+    - name: Install Grafana
+      apt:
+        name: grafana
+        state: present
+
+    - name: Start Grafana service
+      systemd:
+        name: grafana-server
+        state: started
+        enabled: yes
+
+    - name: Ensure Grafana dashboards directory exists
+      file:
+        path: /var/lib/grafana/dashboards
+        state: directory
+        owner: grafana
+        group: grafana
+        mode: '0755'
+
+    - name: Copy Grafana dashboard config
+      copy:
+        src: templates/dashboard.yml
+        dest: /etc/grafana/provisioning/dashboards/dashboard.yml
+
+    - name: Copy Grafana dashboard JSON
+      copy:
+        src: templates/dashboard.json
+        dest: /var/lib/grafana/dashboards/default.json
+
+    - name: Restart Grafana
+      systemd:
+        name: grafana-server
+        state: restarted
+
+    - name: Allow Prometheus port (9090) through UFW
+      ufw:
+        rule: allow
+        port: "9090"
+        proto: tcp
+
+    - name: Allow Grafana port (3000) through UFW
+      ufw:
+        rule: allow
+        port: "3000"
+        proto: tcp
