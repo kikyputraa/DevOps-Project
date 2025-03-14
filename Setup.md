@@ -129,7 +129,7 @@ ansible --version
 ### 2. Install Node Exporter di VM Template:
 #### Download Node Exporter
 ```sh
-wget https://github.com/prometheus/node_exporter/releases/latest/download/node_exporter-linux-amd64.tar.gz -O /tmp/node_exporter.tar.gz
+wget https://github.com/prometheus/node_exporter/releases/download/v1.9.0/node_exporter-1.9.0.linux-amd64.tar.gz -O /tmp/node_exporter.tar.gz
 ```
 #### Ekstrak dan Pindahkan File
 ```sh
