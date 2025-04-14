@@ -45,12 +45,15 @@ ansible --version
 
 ## 2.3 Tambahkan Kunci SSH
 
-### **Langkah 1: Salin Kunci SSH Publik**
-1. Pada VM utama, buka terminal dan tampilkan isi kunci SSH publik:
+### **Langkah 1: Membuat SSH Key Baru**
+1. Pada VM utama, buka terminal dan buatlah kunci SSH publik:
+   ```sh
+   ssh-keygen -t rsa -b 4096 -C "nama_anda@example.com"
+   ```
+2. Menampilkan Kunci SSH Publik:
    ```sh
    cat ~/.ssh/id_rsa.pub
    ```
-2. Salin seluruh output dari perintah tersebut (ini adalah kunci SSH publik).
 
 ### **Langkah 2: Buka Firewall dan Port**
 ```sh
