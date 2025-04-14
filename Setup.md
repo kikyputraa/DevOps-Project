@@ -1,8 +1,6 @@
 # Prasyarat
 1. Server Proxmox VE (PVE) yang sudah aktif dan terkonfigurasi.
-2. VM utama yang menggunakan OS Debian/Ubuntu dan memiliki:
-   - Terraform terinstall.
-   - Ansible terinstall.
+2. VM utama yang menggunakan OS Debian/Ubuntu dan memiliki paket yang diperlukan.
 3. Akses SSH ke Proxmox dan VM utama.
 4. Template VM di Proxmox untuk digunakan oleh Terraform.
 
