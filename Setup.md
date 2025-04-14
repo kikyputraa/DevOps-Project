@@ -49,8 +49,8 @@ ansible --version
 1. Pada VM utama, buka terminal dan buatlah kunci SSH publik:
    Install terlebih dahulu ssh server,
    ```sh
-sudo apt install openssh-server
-```
+   sudo apt install openssh-server
+   ```
 
    ```sh
    ssh-keygen -t rsa -b 4096 -C "nama_anda@example.com"
