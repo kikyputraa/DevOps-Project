@@ -79,7 +79,7 @@ sudo apt install openssh-server
 ```sh
 ssh <user>@<template-vm-ip>
 ```
-#### 3`. Ubah settingan sshd agar bisa permit login
+#### 3. Ubah settingan sshd agar bisa permit login
 ```sh
 sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
 sudo grep -E "^PermitRootLogin" /etc/ssh/sshd_config
