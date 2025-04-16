@@ -57,12 +57,12 @@ ansible --version
    ssh-keygen -t rsa -b 4096 -C "nama_anda@example.com"
    ```
 
-   Catat Hasilnya.
-
 3. Menampilkan Kunci SSH Publik:
    ```sh
    cat ~/.ssh/id_rsa.pub
    ```
+
+   Catat Hasilnya.
 
 ### **Langkah 2: Buka Firewall dan Port**
 ```sh
