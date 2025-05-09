@@ -1,14 +1,6 @@
-# Prasyarat
-1. Server Proxmox VE (PVE) yang sudah aktif dan terkonfigurasi.
-2. VM utama yang menggunakan OS Debian/Ubuntu dan memiliki paket yang diperlukan.
-3. Akses SSH ke Proxmox dan VM utama.
-4. Template VM di Proxmox untuk digunakan oleh Terraform.
-
----
-
 # Konfigurasi VM Utama
 
-## 2.1 Install Terraform
+## 1.1 Install Terraform
 ### 1. Tambahkan repositori HashiCorp:
 ```sh
 sudo apt update && sudo apt install -y gnupg software-properties-common curl
@@ -23,7 +15,7 @@ sudo apt update && sudo apt install -y terraform
 
 ---
 
-## 2.2 Install Ansible
+## 1.2 Install Ansible
 ### 1. Tambahkan repositori Ansible:
 ```sh
 sudo apt update && sudo apt install -y software-properties-common
@@ -43,7 +35,7 @@ ansible --version
 
 ---
 
-## 2.3 Tambahkan Kunci SSH
+## 1.3 Tambahkan Kunci SSH
 
 ### **Langkah 1: Membuat SSH Key Baru**
 1. Pada VM utama, buka terminal dan buatlah kunci SSH publik:
