@@ -60,6 +60,51 @@ sudo systemctl enable --now node_exporter
 ```sh
 systemctl status node_exporter
 ```
+#### Setup SSH
+##### 1. Install SSH
+```sh
+sudo apt install openssh-server
+```
+##### 2. SSH ke template VM dari VM utama:
+```sh
+ssh <user>@<template-vm-ip>
+```
+##### 3. Ubah settingan sshd agar bisa permit login
+```sh
+sudo sed -i 's/^#PermitRootLogin.*/PermitRootLogin yes/' /etc/ssh/sshd_config
+sudo grep -E "^PermitRootLogin" /etc/ssh/sshd_config
+sudo systemctl restart ssh
+sudo systemctl status ssh
+```
+
+##### 4. Buat direktori `.ssh` (jika belum ada):
+```sh
+mkdir -p ~/.ssh
+chmod 700 ~/.ssh
+```
+##### 5. Tambahkan kunci SSH publik ke file `authorized_keys`:
+```sh
+echo "<kunci-ssh-publik-yang-disalin>" >> ~/.ssh/authorized_keys
+chmod 600 ~/.ssh/authorized_keys
+```
+Atau, jika ingin langsung dari file di VM utama:
+```sh
+ssh-copy-id <user>@<template-vm-ip>
+```
+
+##### 6. Keluar dari template VM:
+```sh
+exit
+```
+##### 7. Uji koneksi SSH dari VM utama ke template VM:
+```sh
+ssh <user>@<template-vm-ip>
+```
+Jika berhasil login tanpa diminta memasukkan password, konfigurasi sudah benar.
+
+Dengan cara ini, template VM siap untuk dikelola oleh Ansible tanpa memerlukan password setiap kali SSH.
+
+---
 
 ### 3. Konversi VM menjadi template:
 #### Matikan VM:
