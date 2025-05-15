@@ -7,7 +7,7 @@ Anda bisa menggunakan tutorial ini atau Menggunakan Skrip Ansible.
 
 ---
 
-## 🔧 1. Install dan Konfigurasi Prometheus
+## 1. Install dan Konfigurasi Prometheus
 
 ### Download dan Ekstrak Prometheus
 
