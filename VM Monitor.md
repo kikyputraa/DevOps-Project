@@ -57,7 +57,7 @@ scrape_configs:
 sudo chown prometheus:prometheus /opt/prometheus/prometheus.yml
 ```
 
-### 🛠️ Buat Service Systemd untuk Prometheus
+### Buat Service Systemd untuk Prometheus
 
 ```bash
 sudo nano /etc/systemd/system/prometheus.service
