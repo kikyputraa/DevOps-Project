@@ -1,17 +1,12 @@
----
-- name: Setup Nextcloud with MySQL and Apache2
+- name: Install and Setup OwnCloud
   hosts: localhost
   become: yes
-
-  vars:
-    db_name: nextcloud
-    db_user: nextclouduser
-    db_password: kyput
-    db_host: localhost
-    nextcloud_install_dir: /var/www/html/nextcloud
-
   tasks:
-    # 🔹 Install Dependencies
+
+    - name: Update APT package index
+      apt:
+        update_cache: yes
+
     - name: Install required packages
       apt:
         name:
@@ -19,94 +14,93 @@
           - mysql-server
           - php
           - php-mysql
-          - php-gd
-          - php-json
-          - php-curl
-          - php-mbstring
-          - php-intl
-          - php-imagick
           - php-xml
+          - php-mbstring
+          - php-curl
           - php-zip
-          - php-bcmath
-          - php-gmp
-          - python3-pymysql
-          - unzip
+          - php-gd
           - curl
+          - unzip
         state: present
-        update_cache: yes
 
-    # 🔹 Start and Enable Apache & MySQL
-    - name: Ensure Apache and MySQL are running
-      service:
-        name: "{{ item }}"
+    - name: Start and enable Apache service
+      systemd:
+        name: apache2
         state: started
         enabled: yes
-      loop:
-        - apache2
-        - mysql
 
-    # 🔹 Secure MySQL - Set root password
-    - name: Set MySQL root password and authentication method
-      mysql_user:
-        name: root
-        password: kyput
-        login_unix_socket: /var/run/mysqld/mysqld.sock
-        priv: "*.*:ALL,GRANT"
-        host: localhost
-        state: present
+    - name: Start and enable MySQL service
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
 
-    # 🔹 Create Nextcloud Database & User
-    - name: Create Nextcloud Database
+    - name: Create MySQL Database and User for OwnCloud
       mysql_db:
-        name: "{{ db_name }}"
+        name: owncloud
         state: present
-        login_user: root
-        login_password: kyput
 
-    - name: Create MySQL User for Nextcloud
+    - name: Create MySQL User
       mysql_user:
-        name: "{{ db_user }}"
-        password: "{{ db_password }}"
-        priv: "{{ db_name }}.*:ALL"
-        host: localhost
+        name: ownclouduser
+        password: your_password_here
+        priv: "owncloud.*:ALL"
         state: present
-        login_user: root
-        login_password: kyput
 
-    # 🔹 Download & Extract Nextcloud
-    - name: Download Nextcloud
+    - name: Download OwnCloud
       get_url:
-        url: https://download.nextcloud.com/server/releases/latest.tar.bz2
-        dest: /tmp/nextcloud.tar.bz2
+        url: https://download.owncloud.org/community/owncloud-complete-latest.zip
+        dest: /tmp/owncloud.zip
 
-    - name: Extract Nextcloud
+    - name: Unzip OwnCloud
       unarchive:
-        src: /tmp/nextcloud.tar.bz2
-        dest: /tmp
+        src: /tmp/owncloud.zip
+        dest: /var/www/html/
         remote_src: yes
 
-    - name: Move Nextcloud to web root
-      copy:
-        src: "/tmp/nextcloud/"
-        dest: "{{ nextcloud_install_dir }}"
-        remote_src: yes
-        owner: www-data
-        group: www-data
-        mode: "0755"
-
-    - name: Set ownership for Nextcloud files
+    - name: Set permissions for OwnCloud
       file:
-        path: "{{ nextcloud_install_dir }}"
+        path: /var/www/html/owncloud
         state: directory
-        recurse: yes
         owner: www-data
         group: www-data
+        mode: '0755'
+        recurse: yes
 
-    # 🔹 Configure Apache for Nextcloud
-    - name: Enable Apache Modules
+    - name: Configure Apache for OwnCloud
+      copy:
+        dest: /etc/apache2/sites-available/owncloud.conf
+        content: |
+          Alias /owncloud "/var/www/html/owncloud/"
+          <Directory /var/www/html/owncloud/>
+              Options +FollowSymlinks
+              AllowOverride All
+              Require all granted
+          </Directory>
+          <Directory /var/www/html/owncloud/data/>
+              Require all denied
+          </Directory>
+          <IfModule mod_dav.c>
+              Dav off
+          </IfModule>
+          SetEnv HOME /var/www/html/owncloud
+          SetEnv HTTP_HOME /var/www/html/owncloud
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Enable Apache mod_rewrite
       command: a2enmod rewrite
 
+    - name: Enable OwnCloud site
+      command: a2ensite owncloud
+
     - name: Restart Apache
-      service:
+      systemd:
         name: apache2
         state: restarted
+
+    - name: Clean up downloaded zip file
+      file:
+        path: /tmp/owncloud.zip
+        state: absent
