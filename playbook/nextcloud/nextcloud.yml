@@ -4,8 +4,8 @@
   become: yes
   vars:
     nextcloud_version: "26.0.0"
-    mysql_root_password: "your_mysql_root_password"
-    nextcloud_db_password: "your_nextcloud_db_password"
+    mysql_root_password: "1234"
+    nextcloud_db_password: "kyput"
 
   tasks:
     - name: Update APT package index
