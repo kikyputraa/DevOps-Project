@@ -3,6 +3,7 @@
   hosts: localhost
   become: yes
   vars:
+    ansible_python_interpreter: /usr/bin/python3  # Mengatur interpreter Python
     nextcloud_version: "26.0.0"
     mysql_root_password: "kyput123"  # Password root MySQL
     nextcloud_db_password: "kyput123"  # Password untuk pengguna Nextcloud
@@ -26,6 +27,7 @@
           - php-gd
           - curl
           - unzip
+          - python3-pymysql  # Modul MySQL untuk Python 3
         state: present
 
     - name: Start and enable Apache
@@ -54,6 +56,8 @@
       mysql_db:
         name: nextcloud
         state: present
+        login_user: root
+        login_password: "{{ mysql_root_password }}"  # Menggunakan password root
 
     - name: Create MySQL user for Nextcloud
       mysql_user:
@@ -63,7 +67,7 @@
         priv: "nextcloud.*:ALL"
         state: present
         login_user: root
-        login_password: "{{ mysql_root_password }}"
+        login_password: "{{ mysql_root_password }}"  # Menggunakan password root
 
     - name: Download Nextcloud
       get_url:
