@@ -4,7 +4,7 @@
   become: yes
   vars:
     nextcloud_version: "26.0.0"
-    mysql_root_password: "your_root_password"  # Ubah sesuai kebutuhan
+    mysql_root_password: "1234"  # Ubah sesuai kebutuhan
     nextcloud_db_password: "kyput"
 
   tasks:
