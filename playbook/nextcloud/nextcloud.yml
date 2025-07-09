@@ -1,128 +1,115 @@
 ---
-- name: Install and Configure Nextcloud on localhost
+- name: Setup Nextcloud, MySQL, Apache2 (Localhost)
   hosts: localhost
   become: yes
+
   vars:
-    ansible_python_interpreter: /usr/bin/python3  # Mengatur interpreter Python
-    nextcloud_version: "26.0.0"
-    mysql_root_password: "kyput123"  # Password root MySQL
-    nextcloud_db_password: "kyput123"  # Password untuk pengguna Nextcloud
+    db_name: nextcloud
+    db_user: ncuser
+    db_password: ncpassword
+    db_host: localhost
+    nc_install_dir: /var/www/html/nextcloud
 
   tasks:
-    - name: Update APT package index
-      apt:
-        update_cache: yes
-
-    - name: Install required packages
+    - name: Install dependencies
       apt:
         name:
           - apache2
           - mysql-server
           - php
           - php-mysql
-          - php-xml
-          - php-mbstring
           - php-curl
-          - php-zip
           - php-gd
-          - curl
+          - php-mbstring
+          - php-xml
+          - php-xmlrpc
+          - php-soap
+          - php-intl
+          - php-zip
+          - libapache2-mod-php
           - unzip
-          - python3-pymysql  # Modul MySQL untuk Python 3
+          - curl
         state: present
+        update_cache: yes
 
-    - name: Start and enable Apache
-      systemd:
-        name: apache2
+    - name: Start and enable Apache2 & MySQL
+      service:
+        name: "{{ item }}"
         state: started
         enabled: yes
+      loop:
+        - apache2
+        - mysql
 
-    - name: Start and enable MySQL
-      systemd:
-        name: mysql
-        state: started
-        enabled: yes
-
-    - name: Set MySQL root password and configure authentication
+    - name: Secure MySQL - Set root password and change auth method
       mysql_user:
         name: root
-        password: "{{ mysql_root_password }}"
+        password: ncpassword
+        login_unix_socket: /var/run/mysqld/mysqld.sock
+        priv: "*.*:ALL,GRANT"
         host: localhost
-        login_user: root
-        login_password: ""
         state: present
-        plugin: mysql_native_password
 
-    - name: Create MySQL database for Nextcloud
+    - name: Create Nextcloud Database
       mysql_db:
-        name: nextcloud
+        name: "{{ db_name }}"
         state: present
         login_user: root
-        login_password: "{{ mysql_root_password }}"  # Menggunakan password root
+        login_password: ncpassword
 
-    - name: Create MySQL user for Nextcloud
+    - name: Create MySQL User for Nextcloud
       mysql_user:
-        name: kyput
-        password: "{{ nextcloud_db_password }}"
+        name: "{{ db_user }}"
+        password: "{{ db_password }}"
+        priv: "{{ db_name }}.*:ALL"
         host: localhost
-        priv: "nextcloud.*:ALL"
         state: present
         login_user: root
-        login_password: "{{ mysql_root_password }}"  # Menggunakan password root
+        login_password: ncpassword
 
     - name: Download Nextcloud
       get_url:
-        url: "https://download.nextcloud.com/server/releases/nextcloud-{{ nextcloud_version }}.zip"
+        url: https://download.nextcloud.com/server/releases/latest-31.zip
         dest: /tmp/nextcloud.zip
+        timeout: 60
 
-    - name: Unzip Nextcloud
+    - name: Extract Nextcloud
       unarchive:
         src: /tmp/nextcloud.zip
-        dest: /var/www/html/
+        dest: /tmp
         remote_src: yes
 
-    - name: Set permissions for Nextcloud directory
-      file:
-        path: /var/www/html/nextcloud
+    - name: Copy Nextcloud to web root
+      copy:
+        src: "/tmp/nextcloud/"
+        dest: "{{ nc_install_dir }}"
+        remote_src: yes
         owner: www-data
         group: www-data
-        mode: '0755'
-        recurse: yes
+        mode: "0755"
 
-    - name: Configure Apache for Nextcloud
-      copy:
-        content: |
-          Alias /nextcloud "/var/www/html/nextcloud/"
-          <Directory /var/www/html/nextcloud/>
-              Options +FollowSymlinks
-              AllowOverride All
-              Require all granted
-          </Directory>
-          <Directory /var/www/html/nextcloud/data/>
-              Require all denied
-          </Directory>
-          <IfModule mod_dav.c>
-              Dav off
-          </IfModule>
-          SetEnv HOME /var/www/html/nextcloud
-          SetEnv HTTP_HOME /var/www/html/nextcloud
-        dest: /etc/apache2/sites-available/nextcloud.conf
-
-    - name: Enable Apache site configuration
-      command: a2ensite nextcloud
-
-    - name: Enable mod_rewrite
-      command: a2enmod rewrite
-
-    - name: Restart Apache
-      systemd:
-        name: apache2
-        state: restarted
-
-    - name: Remove downloaded zip file
+    - name: Set ownership for Nextcloud files
       file:
-        path: /tmp/nextcloud.zip
+        path: "{{ nc_install_dir }}"
+        state: directory
+        recurse: yes
+        owner: www-data
+        group: www-data
+
+    - name: Copy Nextcloud Config File
+      template:
+        src: templates/config.php.j2
+        dest: "{{ nc_install_dir }}/config/config.php"
+        owner: www-data
+        group: www-data
+        mode: "0644"
+
+    - name: Remove default Apache index.html
+      file:
+        path: "{{ nc_install_dir }}/index.html"
         state: absent
 
-    - name: Inform user
-      debug:
-        msg: "Nextcloud installation completed. Access it at http://localhost/nextcloud"
+    - name: Restart Apache
+      service:
+        name: apache2
+        state: restarted
