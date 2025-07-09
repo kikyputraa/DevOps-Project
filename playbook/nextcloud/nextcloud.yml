@@ -4,8 +4,8 @@
   become: yes
   vars:
     nextcloud_version: "26.0.0"
-    mysql_root_password: "1234"  # Ubah sesuai kebutuhan
-    nextcloud_db_password: "kyput"
+    mysql_root_password: "kyput123"  # Password root MySQL
+    nextcloud_db_password: "kyput123"  # Password untuk pengguna Nextcloud
 
   tasks:
     - name: Update APT package index
@@ -26,12 +26,6 @@
           - php-gd
           - curl
           - unzip
-          - python3-pip  # Pastikan pip terinstal
-        state: present
-
-    - name: Install PyMySQL
-      pip:
-        name: PyMySQL
         state: present
 
     - name: Start and enable Apache
@@ -54,7 +48,6 @@
         login_user: root
         login_password: ""
         state: present
-        # Menggunakan mysql_native_password
         plugin: mysql_native_password
 
     - name: Create MySQL database for Nextcloud
@@ -64,7 +57,7 @@
 
     - name: Create MySQL user for Nextcloud
       mysql_user:
-        name: nextclouduser
+        name: kyput
         password: "{{ nextcloud_db_password }}"
         host: localhost
         priv: "nextcloud.*:ALL"
