@@ -1,0 +1,167 @@
+---
+- name: Install Nextcloud
+  hosts: localhost
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    mysql_root_password: 'ncpassword'  # Kata sandi root MySQL
+
+  tasks:
+    - name: Update APT repository
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apache2
+          - mysql-server
+          - php
+          - libapache2-mod-php
+          - php-mysql
+          - php-curl
+          - php-gd
+          - php-mbstring
+          - php-xml
+          - php-zip
+          - unzip
+          - curl
+          - python3-mysqldb
+        state: present
+
+    - name: Start and enable Apache
+      systemd:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Start and enable MySQL
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Check MySQL access
+      command: mysql -u root -p{{ mysql_root_password }} -e "SELECT 1;"
+      register: mysql_access
+      ignore_errors: yes
+
+    - name: Reset MySQL root password if access fails
+      block:
+        - name: Stop MySQL service
+          systemd:
+            name: mysql
+            state: stopped
+
+        - name: Start MySQL in safe mode
+          command: mysqld_safe --skip-grant-tables &
+          async: 1
+          poll: 0
+
+        - name: Wait for MySQL to start
+          wait_for:
+            port: 3306
+            delay: 5
+
+        - name: Set MySQL root password
+          mysql_user:
+            name: root
+            password: '{{ mysql_root_password }}'
+            host: localhost
+            login_user: root
+            login_password: ''
+            state: present
+
+        - name: Restart MySQL service
+          systemd:
+            name: mysql
+            state: started
+      when: mysql_access.rc != 0
+
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host: localhost
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Disallow root login remotely
+      mysql_user:
+        name: root
+        host: '%'
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Create Nextcloud database
+      mysql_db:
+        name: nextcloud
+        state: present
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Create Nextcloud user
+      mysql_user:
+        name: ncuser
+        password: 'ncpassword'
+        host: localhost
+        priv: 'nextcloud.*:ALL'
+        state: present
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Download Nextcloud
+      get_url:
+        url: https://download.nextcloud.com/server/releases/latest.zip
+        dest: /tmp/latest.zip
+
+    - name: Unzip Nextcloud
+      unarchive:
+        src: /tmp/latest.zip
+        dest: /var/www/html/
+        remote_src: yes
+
+    - name: Set permissions for Nextcloud
+      file:
+        path: /var/www/html/nextcloud
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: yes
+
+    - name: Create Apache configuration for Nextcloud
+      copy:
+        dest: /etc/apache2/sites-available/nextcloud.conf
+        content: |
+          <VirtualHost *:80>
+              DocumentRoot /var/www/html/nextcloud
+              ServerName localhost
+
+              <Directory /var/www/html/nextcloud>
+                  Options Indexes FollowSymLinks MultiViews
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+
+              ErrorLog ${APACHE_LOG_DIR}/nextcloud_error.log
+              CustomLog ${APACHE_LOG_DIR}/nextcloud_access.log combined
+          </VirtualHost>
+
+    - name: Enable Nextcloud site
+      command: a2ensite nextcloud.conf
+
+    - name: Enable Apache rewrite module
+      command: a2enmod rewrite
+
+    - name: Restart Apache
+      systemd:
+        name: apache2
+        state: restarted
