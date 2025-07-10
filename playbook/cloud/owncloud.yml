@@ -1,0 +1,167 @@
+---
+- name: Install OwnCloud
+  hosts: localhost
+  become: yes
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+    mysql_root_password: 'ocpassword'  # Kata sandi root MySQL
+
+  tasks:
+    - name: Update APT repository
+      apt:
+        update_cache: yes
+
+    - name: Install required packages
+      apt:
+        name:
+          - apache2
+          - mysql-server
+          - php
+          - libapache2-mod-php
+          - php-mysql
+          - php-curl
+          - php-gd
+          - php-mbstring
+          - php-xml
+          - php-zip
+          - unzip
+          - curl
+          - python3-mysqldb
+          - gdebi-core  # Menambahkan gdebi-core di sini
+        state: present
+
+    - name: Start and enable Apache
+      systemd:
+        name: apache2
+        state: started
+        enabled: yes
+
+    - name: Start and enable MySQL
+      systemd:
+        name: mysql
+        state: started
+        enabled: yes
+
+    - name: Check MySQL access
+      command: mysql -u root -p{{ mysql_root_password }} -e "SELECT 1;"
+      register: mysql_access
+      ignore_errors: yes
+
+    - name: Reset MySQL root password if access fails
+      block:
+        - name: Stop MySQL service
+          systemd:
+            name: mysql
+            state: stopped
+
+        - name: Start MySQL in safe mode
+          command: mysqld_safe --skip-grant-tables &
+          async: 1
+          poll: 0
+
+        - name: Wait for MySQL to start
+          wait_for:
+            port: 3306
+            delay: 5
+
+        - name: Set MySQL root password
+          mysql_user:
+            name: root
+            password: '{{ mysql_root_password }}'
+            host: localhost
+            login_user: root
+            login_password: ''
+            state: present
+
+        - name: Restart MySQL service
+          systemd:
+            name: mysql
+            state: started
+      when: mysql_access.rc != 0
+
+    - name: Remove anonymous users
+      mysql_user:
+        name: ''
+        host: localhost
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Disallow root login remotely
+      mysql_user:
+        name: root
+        host: '%'
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Remove test database
+      mysql_db:
+        name: test
+        state: absent
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Create OwnCloud database
+      mysql_db:
+        name: owncloud
+        state: present
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Create OwnCloud user
+      mysql_user:
+        name: ocuser
+        password: 'ocpassword'
+        host: localhost
+        priv: 'owncloud.*:ALL'
+        state: present
+        login_user: root
+        login_password: '{{ mysql_root_password }}'
+
+    - name: Download OwnCloud
+      get_url:
+        url: https://download.owncloud.com/desktop/ownCloud/stable/latest/linux/Ubuntu_22.04/owncloud-client_5.3.2.15463_amd64.deb
+        dest: /tmp/owncloud-client.deb
+
+    - name: Install OwnCloud Desktop Client
+      command: gdebi -n /tmp/owncloud-client.deb
+      args:
+        removes: /tmp/owncloud-client.deb
+
+    - name: Set permissions for OwnCloud
+      file:
+        path: /var/www/html/owncloud
+        owner: www-data
+        group: www-data
+        mode: '0755'
+        recurse: yes
+
+    - name: Create Apache configuration for OwnCloud
+      copy:
+        dest: /etc/apache2/sites-available/owncloud.conf
+        content: |
+          <VirtualHost *:80>
+              DocumentRoot /var/www/html/owncloud
+              ServerName localhost
+
+              <Directory /var/www/html/owncloud>
+                  Options Indexes FollowSymLinks MultiViews
+                  AllowOverride All
+                  Require all granted
+              </Directory>
+
+              ErrorLog ${APACHE_LOG_DIR}/owncloud_error.log
+              CustomLog ${APACHE_LOG_DIR}/owncloud_access.log combined
+          </VirtualHost>
+
+    - name: Enable OwnCloud site
+      command: a2ensite owncloud.conf
+
+    - name: Enable Apache rewrite module
+      command: a2enmod rewrite
+
+    - name: Restart Apache
+      systemd:
+        name: apache2
+        state: restarted
