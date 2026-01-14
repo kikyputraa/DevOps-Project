@@ -1,11 +1,23 @@
 # DevOps Automation Project: Infrastructure as Code & Configuration Management
-
+---
+### 🏗️ Infrastructure & Automation
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)
+
+### 🌐 Services Automation
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
+![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
+![WordPress](https://img.shields.io/badge/WordPress-%2321759B.svg?style=for-the-badge&logo=WordPress&logoColor=white)
+![Nextcloud](https://img.shields.io/badge/Nextcloud-%230082C9.svg?style=for-the-badge&logo=Nextcloud&logoColor=white)
+![Owncloud](https://img.shields.io/badge/ownCloud-%231D2D44.svg?style=for-the-badge&logo=ownCloud&logoColor=white)
+
+### 📊 Monitoring Stack
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
+![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
+![Node Exporter](https://img.shields.io/badge/Node%20Exporter-000000?style=for-the-badge&logo=prometheus&logoColor=white)
 
 Repositori ini berisi proyek automasi infrastruktur menggunakan metodologi **Infrastructure as Code (IaC)**. Proyek ini menggabungkan kekuatan **Terraform** untuk penyediaan (provisioning) Virtual Machine dan **Ansible** untuk manajemen konfigurasi serta instalasi berbagai layanan populer secara otomatis.
 
