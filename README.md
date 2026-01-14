@@ -1,5 +1,7 @@
 # DevOps Automation Project: Infrastructure as Code & Configuration Management
+
 ---
+
 ### 🏗️ Infrastructure & Automation
 ![Terraform](https://img.shields.io/badge/terraform-%235835CC.svg?style=for-the-badge&logo=terraform&logoColor=white)
 ![Ansible](https://img.shields.io/badge/ansible-%231A1918.svg?style=for-the-badge&logo=ansible&logoColor=white)
@@ -7,8 +9,6 @@
 ### 🌐 Services Automation
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-%23326ce5.svg?style=for-the-badge&logo=kubernetes&logoColor=white)
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
-![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
 ![Nginx](https://img.shields.io/badge/nginx-%23009639.svg?style=for-the-badge&logo=nginx&logoColor=white)
 ![WordPress](https://img.shields.io/badge/WordPress-%2321759B.svg?style=for-the-badge&logo=WordPress&logoColor=white)
 ![Nextcloud](https://img.shields.io/badge/Nextcloud-%230082C9.svg?style=for-the-badge&logo=Nextcloud&logoColor=white)
@@ -17,39 +17,41 @@
 ### 📊 Monitoring Stack
 ![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=Prometheus&logoColor=white)
 ![Grafana](https://img.shields.io/badge/grafana-%23F46800.svg?style=for-the-badge&logo=grafana&logoColor=white)
-![Node Exporter](https://img.shields.io/badge/Node%20Exporter-000000?style=for-the-badge&logo=prometheus&logoColor=white)
+![Node Exporter](https://img.shields.io/badge/Node%20Exporter-F46800?style=for-the-badge&logo=prometheus&logoColor=white)
 
-Repositori ini berisi proyek automasi infrastruktur menggunakan metodologi **Infrastructure as Code (IaC)**. Proyek ini menggabungkan kekuatan **Terraform** untuk penyediaan (provisioning) Virtual Machine dan **Ansible** untuk manajemen konfigurasi serta instalasi berbagai layanan populer secara otomatis.
+---
 
-## 🚀 Fitur Utama
+This repository contains an infrastructure automation project leveraging **Infrastructure as Code (IaC)** methodologies. This project combines the power of **Terraform** for Virtual Machine (VM) provisioning and **Ansible** for configuration management and automated installation of various popular services.
 
-- **Automated Provisioning**: Membuat dan mengonfigurasi VM baru secara otomatis menggunakan Terraform.
-- **Multi-Service Deployment**: Automasi instalasi berbagai layanan melalui Ansible Playbook:
+## 🚀 Key Features
+
+- **Automated Provisioning**: Automatically create and configure new VMs using Terraform.
+- **Multi-Service Deployment**: Automated installation of various services via Ansible Playbooks:
   - **Web Server & CMS**: Nginx, WordPress.
   - **Cloud Storage**: Nextcloud, Owncloud.
   - **Containerization**: Docker, Kubernetes (K8s).
-  - **Monitoring Stack**: Setup otomatis untuk monitoring performa sistem.
-- **Tutorial Monitoring**: Dilengkapi dengan panduan setup Prometheus+, Grafana, dan Node Exporter.
-- **Tutorial Membuat VM Template**: Panduan setup vm template untuk dijalankan oleh Terraform.
+  - **Monitoring Stack**: Automated setup for system performance monitoring.
+- **Monitoring Tutorial**: Includes a comprehensive guide for setting up Prometheus, Grafana, and Node Exporter.
+- **VM Template Tutorial**: Documentation on setting up VM templates to be deployed via Terraform.
 
-## 🛠️ Tools yang Digunakan
+## 🛠️ Tools Used
 
-| Tool | Kegunaan |
+| Tool | Purpose |
 | --- | --- |
-| **Terraform** | Automasi pembuatan infrastruktur (Provisioning VM). |
-| **Ansible** | Automasi konfigurasi software dan deployment aplikasi. |
-| **Prometheus** | Sistem monitoring dan time-series database. |
-| **Grafana** | Visualisasi data dan dashboard monitoring. |
-| **Docker** | Platform containerization. |
-| **Kubernetes** | Orchestration untuk container. |
+| **Terraform** | Infrastructure automation (VM Provisioning). |
+| **Ansible** | Software configuration automation and application deployment. |
+| **Prometheus** | Monitoring system and time-series database. |
+| **Grafana** | Data visualization and monitoring dashboards. |
+| **Docker** | Containerization platform. |
+| **Kubernetes** | Container orchestration. |
 
-## 📋 Prasyarat (Prerequisites)
+## 📋 Prerequisites
 
-Sebelum menjalankan proyek ini, pastikan Anda telah menginstal:
+Before running this project, ensure you have installed:
 
-1. [Terraform](https://www.terraform.io/downloads) (Versi terbaru direkomendasikan).
+1. [Terraform](https://www.terraform.io/downloads) (Latest version recommended).
 2. [Ansible](https://docs.ansible.com/ansible/latest/installation_guide/intro_installation.html).
-3. SSH Key yang sudah terkonfigurasi untuk akses ke VM.
-4. Provider Cloud/Virtualisasi (seperti AWS, GCP, Azure, atau Proxmox) yang kredensialnya sudah disiapkan.
-*NOTE: Author menggunakan Proxmox yang dijalankan di server On-Premises
+3. Configured **SSH Keys** for VM access.
+4. A **Cloud/Virtualization Provider** (e.g., AWS, GCP, Azure, or Proxmox) with prepared credentials.
 
+> **NOTE:** The author uses **Proxmox** running on an On-Premises server.
